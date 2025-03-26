@@ -5,6 +5,7 @@ import io.hhplus.tdd.exception.InsufficientBalanceException;
 import io.hhplus.tdd.exception.InvalidAmountException;
 import io.hhplus.tdd.exception.MaxPointExceededException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -34,6 +35,11 @@ class ApiControllerAdvice {
     @ExceptionHandler(MaxPointExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxPointExceededException(MaxPointExceededException e) {
         return ResponseEntity.status(400).body(new ErrorResponse("400", e.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRequest(HttpMessageNotReadableException e) {
+        return ResponseEntity.status(400).body(new ErrorResponse("400", "Invalid request value."));
     }
 
     @ExceptionHandler(Exception.class)

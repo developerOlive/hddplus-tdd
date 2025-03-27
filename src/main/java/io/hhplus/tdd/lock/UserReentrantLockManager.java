@@ -3,6 +3,7 @@ package io.hhplus.tdd.lock;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class UserReentrantLockManager {
@@ -12,8 +13,6 @@ public class UserReentrantLockManager {
     private final ConcurrentHashMap<Long, UserLock> lockMap = new ConcurrentHashMap<>();
 
     public UserLock getLock(long userId) {
-        return lockMap.computeIfAbsent(userId, id ->
-                new UserReentrantLock(new java.util.concurrent.locks.ReentrantLock())
-        );
+        return lockMap.computeIfAbsent(userId, id -> new UserReentrantLock(new ReentrantLock()));
     }
 }

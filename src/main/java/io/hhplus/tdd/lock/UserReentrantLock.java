@@ -1,10 +1,12 @@
 package io.hhplus.tdd.lock;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 public class UserReentrantLock implements UserLock {
 
-    private final java.util.concurrent.locks.ReentrantLock lock;
+    private final ReentrantLock lock;
 
-    public UserReentrantLock(java.util.concurrent.locks.ReentrantLock lock) {
+    public UserReentrantLock(ReentrantLock lock) {
         this.lock = lock;
     }
 

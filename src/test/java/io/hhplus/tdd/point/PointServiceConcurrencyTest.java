@@ -61,7 +61,7 @@ class PointServiceConcurrencyTest {
     class 포인트를_동시에_충전할_때 {
 
         @Test
-        void 동시_충전요청이_순차적으로_처리되는지_확인한다_테스트도구_CountDownLatch() throws InterruptedException {
+        void 동시_충전요청이_정상적으로_처리되는지_확인한다_테스트도구_CountDownLatch() throws InterruptedException {
             int threadCount = 5;
             long chargeAmount = 100L;
 
@@ -88,7 +88,7 @@ class PointServiceConcurrencyTest {
         }
 
         @Test
-        void 동시_충전요청이_순차적으로_처리되는지_확인한다_테스트도구_CountDownLatch_CyclicBarrier() throws InterruptedException {
+        void 동시_충전요청이_정상적으로_처리되는지_확인한다_테스트도구_CountDownLatch_CyclicBarrier() throws InterruptedException {
             int threadCount = 10;
             long chargeAmount = 100L;
 
@@ -152,7 +152,7 @@ class PointServiceConcurrencyTest {
     class 포인트를_동시에_사용할_때 {
 
         @Test
-        void 동시_사용요청이_순차적으로_처리되는지_확인한다_테스트도구_CountDownLatch() throws InterruptedException {
+        void 동시_사용요청이_정상적으로_처리되는지_확인한다_테스트도구_CountDownLatch() throws InterruptedException {
             pointService.charge(userId, 1000);
             log.info("초기 포인트 1000 충전 완료");
 
@@ -183,7 +183,7 @@ class PointServiceConcurrencyTest {
         }
 
         @Test
-        void 동시_사용요청이_순차적으로_처리되는지_확인한다_테스트도구_CountDownLatch_CyclicBarrier() throws InterruptedException {
+        void 동시_사용요청이_정상적으로_처리되는지_확인한다_테스트도구_CountDownLatch_CyclicBarrier() throws InterruptedException {
             pointService.charge(userId, 1000);
             log.info("초기 포인트 1000 충전 완료");
 

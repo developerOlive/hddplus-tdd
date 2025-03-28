@@ -12,7 +12,7 @@ configurations {
 }
 
 allprojects {
-    group = property("app.group").toString()
+    group = findProperty("app.group")?.toString() ?: "io.hhplus"
 }
 
 dependencyManagement {
@@ -49,4 +49,17 @@ tasks.getByName("jar") {
 tasks.test {
     ignoreFailures = true
     useJUnitPlatform()
+}
+
+tasks.test {
+    useJUnitPlatform()
+    systemProperty("file.encoding", "UTF-8")
+
+    testLogging {
+        showStandardStreams = true
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add("-parameters")
 }

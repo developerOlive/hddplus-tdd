@@ -94,3 +94,112 @@ userId 기준으로 락을 분리하면 → 동일 사용자에 대한 요청만
 
 ![image](https://github.com/user-attachments/assets/f6295b96-c911-41d6-ab92-18b2015b7c73)
 
+<br><br><br>
+
+
+## [4] 그 외 동시성 이슈를 해결하기 위해 생각한 방법
+
+### (1) synchronized 
+- synchronized는 간단한 동기화 방법이지만, <br>
+임계 영역 전체를 하나의 락으로 감싸기 때문에 <br>
+동시성이 필요 없는 상황까지 차단할 수 있음. <br>
+<br>
+
+- 예를 들어, 서로 다른 사용자에 대한 요청도 모두 직렬화되기 때문에 <br>
+사용자 A의 요청이 사용자 B의 요청을 불필요하게 기다리는 병목이 발생할 수 있음 <br>
+<br>
+
+- 또한 객체 단위로 락이 걸리기 때문에 <br>
+userId 단위로 락을 분리하는 세밀한 제어가 어려움. <br>
+<br>
+
+- 이런 이유로 사용자별로 락을 분리할 수 있는 <br>
+ `ConcurrentHashMap + ReentrantLock 조합` 선택함. <br>
+
+<br>
+
+```java
+// ❌ synchronized: 모든 요청을 직렬화 (userId 무시)
+public class SynchronizedPointService {
+    private long point = 0;
+
+    public synchronized void charge(Long userId, long amount) {
+        point += amount;
+        // userId가 달라도 동시에 실행 불가
+    }
+}
+
+// ✅ ReentrantLock: userId별로 락 분리 
+public class ReentrantPointService {
+    private final Map<Long, ReentrantLock> userLocks = new ConcurrentHashMap<>();
+    private final Map<Long, Long> userPoints = new ConcurrentHashMap<>();
+
+    public void charge(Long userId, long amount) {
+        ReentrantLock lock = userLocks.computeIfAbsent(userId, id -> new ReentrantLock());
+        lock.lock();
+        try {
+            long current = userPoints.getOrDefault(userId, 0L);
+            userPoints.put(userId, current + amount);
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+```
+
+<br><br>
+
+### (2) AtomicLong 
+- AtomicLong은 CAS(Compare-And-Swap) 기반의 낙관적 락으로 <br> 
+락 없이도 동시성 제어가 가능한 경량화된 방식. <br><br>
+
+- 단순한 값 증가/감소에는 적합하지만 <br> 
+이번 과제처럼 포인트 조회 → 계산 → 저장 → 히스토리 기록처럼 <br>
+여러 작업이 묶여 있는 흐름에는 원자성이 보장되지 않음. <br><br>
+
+- 전체 로직을 보호하기에는 범위가 좁기 떄문에
+락 제어와 범위 지정이 가능한 `ConcurrentHashMap + ReentrantLock 조합` 선택함. <br>
+
+<br>
+
+```java
+// ❌ AtomicLong: 값은 안전하지만 복합 로직 보호 어려움
+public class AtomicPointService {
+    private final AtomicLong point = new AtomicLong(1000);
+
+    public void use(long amount) {
+        long current;
+        long updated;
+        do {
+            current = point.get();
+            if (amount > current) throw new IllegalArgumentException("잔액 부족");
+            updated = current - amount;
+        } while (!point.compareAndSet(current, updated));
+
+        // 이 아래 로직은 원자적으로 보호되지 않음
+        // ex) 히스토리 저장, 알림 전송 등
+    }
+}
+
+// ✅ ReentrantLock: 복합 로직 전체를 명확하게 보호 가능
+public class LockPointService {
+    private final ReentrantLock lock = new ReentrantLock();
+    private long point = 1000;
+
+    public void use(long amount) {
+        lock.lock();
+        try {
+            if (amount > point) throw new IllegalArgumentException("잔액 부족");
+            point -= amount;
+
+            // 이 안에 있는 모든 로직은 동시성  보호됨
+            // ex) 히스토리 저장, 로그 기록 등
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+```
+
